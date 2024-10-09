@@ -1,0 +1,149 @@
+import React, { useState, useEffect } from 'react';
+import SupplierModal from './SupplierModal';
+import ItemSelectionModal from './ItemSelectionModal';
+import { exportToExcel } from './exportToExcel'; // Custom utility for exporting
+import { printPurchaseOrder } from './printPurchaseOrder'; // Custom utility for printing
+
+const PurchaseOrder = () => {
+  const [orderDate] = useState(new Date().toLocaleDateString());
+  const [supplier, setSupplier] = useState('');
+  const [items, setItems] = useState([]);
+  const [orderNo, setOrderNo] = useState(Date.now()); // Simplified auto-generation of Order No
+  
+  // Calculated total order amount
+  const totalAmount = items.reduce((acc, item) => acc + item.netAmount, 0);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Logic for saving Purchase Order
+  };
+
+  return (
+    <div className="p-8">
+      <h2 className="text-xl font-semibold mb-4">Purchase Order</h2>
+      <form onSubmit={handleSubmit}>
+        {/* Order No and Order Date */}
+        <div className="mb-4">
+          <label>Order No: {orderNo}</label>
+        </div>
+        <div className="mb-4">
+          <label>Order Date: {orderDate}</label>
+        </div>
+
+        {/* Supplier Selection */}
+        <label>Supplier Name</label>
+        <div className="flex items-center mb-4">
+          <input
+            type="text"
+            value={supplier}
+            readOnly
+            className="border p-2 w-full"
+          />
+          <button
+            type="button"
+            className="ml-2 p-2 bg-blue-500 text-white"
+            onClick={() => /* Logic to open supplier modal */ {}}
+          >
+            Search Supplier
+          </button>
+        </div>
+
+        {/* Item List */}
+        <div className="mb-4">
+          <button
+            type="button"
+            className="p-2 bg-blue-500 text-white"
+            onClick={() => /* Logic to open item selection modal */ {}}
+          >
+            Add Items
+          </button>
+        </div>
+        
+        <div className="mb-4">
+          <table className="table-auto w-full">
+            <thead>
+              <tr>
+                <th>Item No</th>
+                <th>Item Name</th>
+                <th>Stock Unit</th>
+                <th>Unit Price</th>
+                <th>Packing Unit</th>
+                <th>Order Qty</th>
+                <th>Net Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, index) => (
+                <tr key={index}>
+                  <td>{item.itemNo}</td>
+                  <td>{item.itemName}</td>
+                  <td>{item.stockUnit}</td>
+                  <td>{item.unitPrice}</td>
+                  <td>
+                    <select
+                      value={item.packingUnit}
+                      onChange={(e) => {
+                        const updatedItems = [...items];
+                        updatedItems[index].packingUnit = e.target.value;
+                        setItems(updatedItems);
+                      }}
+                    >
+                      <option value="box">Box</option>
+                      <option value="carton">Carton</option>
+                      <option value="pack">Pack</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      value={item.orderQty}
+                      onChange={(e) => {
+                        const updatedItems = [...items];
+                        updatedItems[index].orderQty = e.target.value;
+                        updatedItems[index].netAmount =
+                          updatedItems[index].orderQty * updatedItems[index].unitPrice;
+                        setItems(updatedItems);
+                      }}
+                      className="border p-2"
+                    />
+                  </td>
+                  <td>{item.netAmount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Total Amount */}
+        <div className="mb-4">
+          <h3>Total Amount: {totalAmount}</h3>
+        </div>
+
+        {/* Actions: Submit, Export to Excel, Print */}
+        <button type="submit" className="bg-green-500 text-white p-2 mr-2">
+          Save Purchase Order
+        </button>
+        <button
+          type="button"
+          className="bg-blue-500 text-white p-2 mr-2"
+          onClick={() => exportToExcel(items, orderNo)}
+        >
+          Export to Excel
+        </button>
+        <button
+          type="button"
+          className="bg-gray-500 text-white p-2"
+          onClick={() => printPurchaseOrder(orderNo, supplier, items, totalAmount)}
+        >
+          Print Purchase Order
+        </button>
+      </form>
+
+      {/* Supplier and Item Selection Modals */}
+      <SupplierModal /* props to manage modal visibility */ />
+      <ItemSelectionModal setItems={setItems} items={items} />
+    </div>
+  );
+};
+
+export default PurchaseOrder;
